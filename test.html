@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API测试页面</title>
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+</head>
+<body>
+    <h1>API测试页面</h1>
+
+    <button onclick="testStatus()">测试状态</button>
+    <button onclick="testPatterns()">测试模式接口</button>
+    <button onclick="testStocks()">测试股票接口</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function testStatus() {
+            const result = await StockAPI.getStatus();
+            document.getElementById('result').innerHTML = JSON.stringify(result, null, 2);
+        }
+
+        async function testPatterns() {
+            const result = await StockAPI.getPatterns();
+            document.getElementById('result').innerHTML = JSON.stringify(result, null, 2);
+        }
+
+        async function testStocks() {
+            const result = await StockAPI.getStocks();
+            document.getElementById('result').innerHTML = JSON.stringify(result, null, 2);
+        }
+    </script>
+</body>
+</html>

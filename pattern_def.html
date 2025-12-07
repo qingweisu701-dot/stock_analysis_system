@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>走势模板定义 - 支持拖动修改+基础模板</title>
+    <style>
+        /* 导航栏样式 */
+        .navbar {
+            width: 100%;
+            background-color: #2c3e50;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .navbar-logo {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navbar-menu a:hover {
+            background-color: #34495e;
+        }
+        .navbar-menu a.active {
+            background-color: #3498db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        h3 {
+            color: #34495e;
+            margin: 20px 0 15px 0;
+        }
+        .form-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .form-item {
+            margin: 15px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        .form-item label {
+            display: inline-block;
+            width: 100px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 5px;
+        }
+        .form-item input, .form-item textarea, .form-item select {
+            flex: 1;
+            max-width: 600px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-item textarea {
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        button {
+            padding: 10px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin: 0 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .mode-btn {
+            background-color: #e67e22;
+        }
+        .mode-btn.active {
+            background-color: #d35400;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px #d35400;
+        }
+        .canvas-tools {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .base-template-btn {
+            background-color: #9b59b6;
+        }
+        .base-template-btn:hover {
+            background-color: #8e44ad;
+        }
+        .local-btn {
+            background-color: #2ecc71;
+        }
+        .local-btn:hover {
+            background-color: #27ae60;
+        }
+        #patternCanvas {
+            display: block;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            width: 800px;
+            height: 400px;
+            margin: 10px 0;
+            cursor: crosshair;
+        }
+        #pointCount {
+            margin-left: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .mode-tip {
+            color: #e67e22;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .template-list {
+            margin-top: 20px;
+        }
+        .template-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .template-table th {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .template-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        .empty-tip {
+            color: #7f8c8d;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar"><!DOCTYPE html>
+<html>
+<head>
+    <title>模式定义</title>
+    <!-- 引入统一的API库 -->
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>模式定义页面</h1>
+        <button onclick="loadPatterns()">加载模式</button>
+        <div id="patterns-list"></div>
+    </div>
+
+    <script>
+        // 使用统一的API调用
+        async function loadPatterns() {
+            try {
+                const result = await StockAPI.getPatterns();
+                if (result.code === 200) {
+                    document.getElementById('patterns-list').innerHTML =
+                        JSON.stringify(result.data, null, 2);
+                } else {
+                    alert('加载失败: ' + result.msg);
+                }
+            } catch (error) {
+                console.error('API调用错误:', error);
+                alert('网络错误，请检查服务器状态');
+            }
+        }
+
+        // 页面加载时检查API状态
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const status = await StockAPI.getStatus();
+                console.log('API状态:', status);
+            } catch (error) {
+                console.error('API连接失败:', error);
+                alert('⚠️ 后端服务未启动，请确保服务器正在运行');
+            }
+        });
+    </script>
+</body>
+</html>
+        <div class="navbar-container">
+            <div class="navbar-logo">股票分析系统</div>
+            <div class="navbar-menu">
+                <a href="/">首页</a>
+                <a href="/data_crawl">数据采集</a>
+                <a href="/pattern_def" class="active">模板定义</a>
+                <a href="/matching">相似匹配</a>
+                <a href="/prediction">买卖点预测</a>
+                <a href="/backtest">策略回测</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>走势模板绘制（支持拖动修改+基础模板）</h2>
+
+        <div class="form-section">
+            <!-- 操作模式切换 -->
+            <h3>1. 操作模式</h3>
+            <div class="canvas-tools">
+                <button class="mode-btn active" onclick="switchMode('add')">添加点模式（默认）</button>
+                <button class="mode-btn" onclick="switchMode('edit')">编辑点模式（拖动/修改）</button>
+                <span class="mode-tip" id="modeTip">当前：添加点模式（点击画布空白处添加新点）</span>
+            </div>
+
+            <!-- 经典基础模板 -->
+            <h3>2. 经典基础模板</h3>
+            <div class="canvas-tools">
+                <button class="base-template-btn" onclick="loadBaseTemplate('w_bottom')">加载W底模板</button>
+                <button class="base-template-btn" onclick="loadBaseTemplate('head_shoulder_top')">加载头肩顶模板</button>
+                <button class="base-template-btn" onclick="loadBaseTemplate('up_triangle')">加载上升三角形模板</button>
+                <button class="base-template-btn" onclick="loadBaseTemplate('double_top')">加载双顶（M顶）模板</button>
+            </div>
+
+            <!-- 自定义模板绘制 -->
+            <h3>3. 自定义模板绘制</h3>
+            <div class="form-item">
+                <label>模板名称：</label>
+                <input type="text" id="drawTemplateName" placeholder="请输入模板名称（如：自定义W底）">
+            </div>
+
+            <div class="canvas-tools">
+                <button onclick="clearAllPoints()">清空画布</button>
+                <button onclick="deleteLastPoint()">删除最后一个点</button>
+                <button class="local-btn" onclick="saveTemplateToLocal()">保存到本地</button>
+                <button onclick="submitTemplateToServer()">提交到服务器（数据库）</button>
+                <span id="pointCount">已绘制关键点：0个</span>
+            </div>
+
+            <!-- 绘制画布 -->
+            <canvas id="patternCanvas" width="800" height="400"></canvas>
+
+            <!-- 模板数据展示 -->
+            <div class="form-item" style="margin-top: 15px;">
+                <label>模板数据：</label>
+                <textarea id="keyPoints" readonly placeholder="绘制/加载模板后自动生成"></textarea>
+            </div>
+
+            <!-- 本地模板管理 -->
+            <h3>4. 本地保存的模板</h3>
+            <div class="form-item">
+                <label>选择模板：</label>
+                <select id="localTemplateSelect" onchange="loadLocalTemplate(this.value)">
+                    <option value="">-- 请选择本地保存的模板 --</option>
+                </select>
+                <button onclick="deleteLocalTemplate()">删除选中模板</button>
+            </div>
+
+            <!-- 服务器模板加载 -->
+            <h3>5. 服务器模板（数据库）</h3>
+            <div class="form-item">
+                <label>服务器模板：</label>
+                <select id="serverTemplateSelect">
+                    <option value="">-- 加载服务器模板 --</option>
+                </select>
+                <button onclick="loadServerTemplate()">加载选中模板</button>
+            </div>
+        </div>
+
+        <!-- 本地模板列表 -->
+        <div class="form-section">
+            <h3>本地模板列表</h3>
+            <div id="savedTemplateList">
+                <p class="empty-tip" id="templateEmptyTip">暂无本地保存的模板</p>
+                <table class="template-table" id="templateTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>模板名称</th>
+                            <th>关键点数量</th>
+                            <th>保存时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="templateTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Chart.js（CDN） -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 引入jQuery -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
+    <script>
+        // 全局变量
+        let keyPoints = [];
+        let chartInstance = null;
+        let selectedPointIndex = -1;
+        let isDragging = false;
+        let currentMode = 'add';
+        const AXIS_CONFIG = { x: { min: 0, max: 10 }, y: { min: 0, max: 20 } };
+        const POINT_SELECT_THRESHOLD = 5;
+
+        // 经典基础模板库
+        const BASE_TEMPLATES = {
+            w_bottom: [{x:1,y:5},{x:3,y:2},{x:5,y:5},{x:7,y:2},{x:9,y:5}],
+            head_shoulder_top: [{x:1,y:8},{x:3,y:12},{x:5,y:15},{x:7,y:12},{x:9,y:8}],
+            up_triangle: [{x:1,y:4},{x:2,y:10},{x:3,y:6},{x:4,y:10},{x:5,y:8},{x:6,y:10},{x:7,y:9},{x:8,y:10}],
+            double_top: [{x:1,y:12},{x:3,y:8},{x:5,y:12},{x:7,y:8},{x:9,y:6}]
+        };
+
+        // 页面初始化
+        $(document).ready(function() {
+            initPatternCanvas();
+            renderTemplateList();
+            updateLocalTemplateSelect();
+            loadServerTemplateList();
+        });
+
+        // 模式切换
+        function switchMode(mode) {
+            currentMode = mode;
+            $('.mode-btn').removeClass('active');
+            $(`.mode-btn[onclick="switchMode('${mode}')"]`).addClass('active');
+
+            const tipText = mode === 'add'
+                ? '当前：添加点模式（点击画布空白处添加新点）'
+                : '当前：编辑点模式（点击/拖动红点修改位置）';
+            $('#modeTip').text(tipText);
+            $('#patternCanvas').css('cursor', mode === 'add' ? 'crosshair' : 'move');
+        }
+
+        // 初始化画布
+        function initPatternCanvas() {
+            const canvas = document.getElementById('patternCanvas');
+            canvas.width = 800;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: '走势模板',
+                        data: [],
+                        borderColor: '#2c3e50',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#e74c3c',
+                        pointRadius: 8,
+                        pointHoverRadius: 10,
+                        tension: 0.1,
+                        fill: false,
+                        showLine: true
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: { display: true, text: '时间/周期' },
+                            min: AXIS_CONFIG.x.min,
+                            max: AXIS_CONFIG.x.max,
+                            ticks: { stepSize: 1 },
+                            grid: { display: true }
+                        },
+                        y: {
+                            title: { display: true, text: '价格' },
+                            min: AXIS_CONFIG.y.min,
+                            max: AXIS_CONFIG.y.max,
+                            ticks: { stepSize: 2 },
+                            grid: { display: true }
+                        }
+                    },
+                    interaction: { mode: 'nearest', intersect: false },
+                    animation: { duration: 0 },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `周期：${ctx.raw.x}，价格：${ctx.raw.y}`
+                            }
+                        }
+                    }
+                }
+            });
+
+            bindCanvasEvents();
+        }
+
+        // 画布事件绑定
+        function bindCanvasEvents() {
+            const canvas = document.getElementById('patternCanvas');
+
+            canvas.addEventListener('mousedown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const chartX = parseFloat((AXIS_CONFIG.x.min + (AXIS_CONFIG.x.max - AXIS_CONFIG.x.min) * (mouseX / rect.width)).toFixed(2));
+                const chartY = parseFloat((AXIS_CONFIG.y.max - (AXIS_CONFIG.y.max - AXIS_CONFIG.y.min) * (mouseY / rect.height)).toFixed(2));
+
+                if (currentMode === 'edit') {
+                    let closestIndex = -1;
+                    let minDistance = POINT_SELECT_THRESHOLD;
+
+                    keyPoints.forEach((p, i) => {
+                        const distance = Math.sqrt(Math.pow(p.x - chartX, 2) + Math.pow(p.y - chartY, 2));
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestIndex = i;
+                        }
+                    });
+
+                    if (closestIndex !== -1) {
+                        selectedPointIndex = closestIndex;
+                        isDragging = true;
+                        canvas.style.cursor = 'grabbing';
+                        chartInstance.data.datasets[0].pointRadius = keyPoints.map((_, i) => i === closestIndex ? 10 : 8);
+                        chartInstance.update('redraw');
+                    }
+                } else {
+                    const newPoint = {x: chartX, y: chartY};
+                    keyPoints.push(newPoint);
+                    updateChartData();
+                    updateKeyPointsJSON();
+                    document.getElementById('pointCount').textContent = `已绘制关键点：${keyPoints.length}个`;
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (currentMode !== 'edit' || !isDragging || selectedPointIndex === -1) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const newX = parseFloat(Math.max(AXIS_CONFIG.x.min, Math.min(AXIS_CONFIG.x.max,
+                    (AXIS_CONFIG.x.min + (AXIS_CONFIG.x.max - AXIS_CONFIG.x.min) * (mouseX / rect.width)))).toFixed(2));
+                const newY = parseFloat(Math.max(AXIS_CONFIG.y.min, Math.min(AXIS_CONFIG.y.max,
+                    (AXIS_CONFIG.y.max - (AXIS_CONFIG.y.max - AXIS_CONFIG.y.min) * (mouseY / rect.height)))).toFixed(2));
+
+                keyPoints[selectedPointIndex] = {x: newX, y: newY};
+                updateChartData();
+                updateKeyPointsJSON();
+            });
+
+            ['mouseup', 'mouseleave'].forEach(event => {
+                canvas.addEventListener(event, () => {
+                    if (currentMode === 'edit') {
+                        isDragging = false;
+                        selectedPointIndex = -1;
+                        canvas.style.cursor = 'move';
+                        chartInstance.data.datasets[0].pointRadius = 8;
+                        chartInstance.update('redraw');
+                    }
+                });
+            });
+        }
+
+        // 更新画布数据
+        function updateChartData() {
+            if (!chartInstance) return;
+            chartInstance.data.datasets[0].data = keyPoints.map(p => ({
+                x: Number(p.x),
+                y: Number(p.y)
+            }));
+            chartInstance.update('redraw');
+        }
+
+        // 更新JSON文本框
+        function updateKeyPointsJSON() {
+            document.getElementById('keyPoints').value = JSON.stringify(keyPoints, null, 2);
+        }
+
+        // 加载基础模板
+        function loadBaseTemplate(templateKey) {
+            keyPoints = JSON.parse(JSON.stringify(BASE_TEMPLATES[templateKey]));
+            const nameMap = {
+                w_bottom: 'W底模板',
+                head_shoulder_top: '头肩顶模板',
+                up_triangle: '上升三角形模板',
+                double_top: '双顶（M顶）模板'
+            };
+            $('#drawTemplateName').val(nameMap[templateKey]);
+            updateChartData();
+            updateKeyPointsJSON();
+            document.getElementById('pointCount').textContent = `已绘制关键点：${keyPoints.length}个`;
+            alert(`成功加载【${nameMap[templateKey]}】，可切换到编辑模式修改！`);
+        }
+
+        // 保存到本地
+        function saveTemplateToLocal() {
+            const name = $('#drawTemplateName').val().trim();
+            if (!name) {
+                alert('请输入模板名称！');
+                return;
+            }
+            if (keyPoints.length < 2) {
+                alert('至少绘制2个关键点才能保存！');
+                return;
+            }
+
+            const template = {
+                id: 'tpl_' + Date.now(),
+                name: name,
+                points: JSON.parse(JSON.stringify(keyPoints)),
+                createTime: new Date().toLocaleString()
+            };
+
+            let templates = JSON.parse(localStorage.getItem('stockPatterns') || '[]');
+            templates = templates.filter(t => t.name !== name);
+            templates.push(template);
+            localStorage.setItem('stockPatterns', JSON.stringify(templates));
+
+            alert('模板已保存到本地！');
+            renderTemplateList();
+            updateLocalTemplateSelect();
+        }
+
+        // 加载本地模板
+        function loadLocalTemplate(tplId) {
+            if (!tplId) return;
+            const templates = JSON.parse(localStorage.getItem('stockPatterns') || '[]');
+            const tpl = templates.find(t => t.id === tplId);
+            if (!tpl) return;
+
+            keyPoints = JSON.parse(JSON.stringify(tpl.points));
+            $('#drawTemplateName').val(tpl.name);
+            updateChartData();
+            updateKeyPointsJSON();
+            document.getElementById('pointCount').textContent = `已绘制关键点：${keyPoints.length}个`;
+        }
+
+        // 删除本地模板
+        function deleteLocalTemplate() {
+            const tplId = $('#localTemplateSelect').val();
+            if (!tplId) {
+                alert('请选择要删除的模板！');
+                return;
+            }
+            if (!confirm('确定删除该模板吗？删除后无法恢复！')) return;
+
+            let templates = JSON.parse(localStorage.getItem('stockPatterns') || '[]');
+            templates = templates.filter(t => t.id !== tplId);
+            localStorage.setItem('stockPatterns', JSON.stringify(templates));
+
+            $('#localTemplateSelect').val('');
+            renderTemplateList();
+            updateLocalTemplateSelect();
+            alert('模板已删除！');
+        }
+
+        // 渲染本地模板列表
+        function renderTemplateList() {
+            const templates = JSON.parse(localStorage.getItem('stockPatterns') || '[]');
+            const $tbody = $('#templateTableBody');
+            const $emptyTip = $('#templateEmptyTip');
+            const $table = $('#templateTable');
+
+            if (templates.length === 0) {
+                $emptyTip.show();
+                $table.hide();
+                return;
+            }
+
+            $emptyTip.hide();
+            $table.show();
+            $tbody.empty();
+
+            templates.forEach(tpl => {
+                $tbody.append(`
+                    <tr>
+                        <td>${tpl.name}</td>
+                        <td>${tpl.points.length}</td>
+                        <td>${tpl.createTime}</td>
+                        <td>
+                            <button onclick="loadLocalTemplate('${tpl.id}')" style="padding: 5px 10px;">加载</button>
+                            <button onclick="deleteLocalTemplateById('${tpl.id}')" style="padding: 5px 10px; background: #e74c3c;">删除</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // 更新本地模板下拉框
+        function updateLocalTemplateSelect() {
+            const $select = $('#localTemplateSelect');
+            const templates = JSON.parse(localStorage.getItem('stockPatterns') || '[]');
+
+            $select.html('<option value="">-- 请选择本地保存的模板 --</option>');
+            templates.forEach(tpl => {
+                $select.append(`<option value="${tpl.id}">${tpl.name}</option>`);
+            });
+        }
+
+        // 根据ID删除本地模板
+        function deleteLocalTemplateById(tplId) {
+            if (!confirm('确定删除该模板吗？')) return;
+            let templates = JSON.parse(localStorage.getItem('stockPatterns') || '[]');
+            templates = templates.filter(t => t.id !== tplId);
+            localStorage.setItem('stockPatterns', JSON.stringify(templates));
+            renderTemplateList();
+            updateLocalTemplateSelect();
+        }
+
+        // 加载服务器模板列表
+        function loadServerTemplateList() {
+            $.get('/get_patterns', function(res) {
+                if (res.code === 200 && res.data.length > 0) {
+                    const $select = $('#serverTemplateSelect');
+                    $select.html('<option value="">-- 加载服务器模板 --</option>');
+                    res.data.forEach(p => {
+                        $select.append(`<option value="${p.id}">${p.name}（${p.type}型）</option>`);
+                    });
+                }
+            });
+        }
+
+        // 加载服务器模板
+        function loadServerTemplate() {
+            const tplId = $('#serverTemplateSelect').val();
+            if (!tplId) {
+                alert('请选择服务器模板！');
+                return;
+            }
+            $.get(`/get_pattern_by_id?id=${tplId}`, function(res) {
+                if (res.code === 200 && res.data) {
+                    keyPoints = res.data.key_points;
+                    $('#drawTemplateName').val(res.data.template_name);
+                    updateChartData();
+                    updateKeyPointsJSON();
+                    document.getElementById('pointCount').textContent = `已绘制关键点：${keyPoints.length}个`;
+                    alert('服务器模板加载成功！');
+                } else {
+                    alert('加载服务器模板失败：' + res.msg);
+                }
+            }).fail(function() {
+                alert('请先完善后端/get_pattern_by_id接口！');
+            });
+        }
+
+        // 提交到服务器
+        function submitTemplateToServer() {
+            const name = $('#drawTemplateName').val().trim();
+            if (!name) {
+                alert('请输入模板名称！');
+                return;
+            }
+            if (keyPoints.length < 2) {
+                alert('至少绘制2个关键点才能提交！');
+                return;
+            }
+
+            const formattedPoints = keyPoints.map(p => ({
+                period: Number(p.x),
+                price: Number(p.y),
+                x: Number(p.x),
+                y: Number(p.y)
+            }));
+
+            const formData = new FormData();
+            formData.append('template_name', name);
+            formData.append('key_points', JSON.stringify(formattedPoints));
+
+            $.ajax({
+                url: '/create_draw_pattern',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    if (res.code === 200) {
+                        alert(res.msg);
+                        saveTemplateToLocal();
+                        loadServerTemplateList();
+                    } else {
+                        alert(res.msg);
+                    }
+                },
+                error: function(err) {
+                    alert('提交失败：' + err.responseJSON?.msg || '网络错误');
+                }
+            });
+        }
+
+        // 清空画布
+        function clearAllPoints() {
+            keyPoints = [];
+            updateChartData();
+            updateKeyPointsJSON();
+            document.getElementById('pointCount').textContent = '已绘制关键点：0个';
+            $('#drawTemplateName').val('');
+        }
+
+        // 删除最后一个点
+        function deleteLastPoint() {
+            if (keyPoints.length === 0) {
+                alert('暂无关键点可删除！');
+                return;
+            }
+            keyPoints.pop();
+            updateChartData();
+            updateKeyPointsJSON();
+            document.getElementById('pointCount').textContent = `已绘制关键点：${keyPoints.length}个`;
+        }
+    </script>
+</body>
+</html>

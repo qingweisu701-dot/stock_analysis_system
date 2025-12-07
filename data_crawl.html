@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数据采集 - 股票智能分析平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">股票智能分析平台</div>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/data_crawl">数据采集</a>
+            <a href="/pattern_def">走势模板定义</a>
+            <a href="/matching">相似模式匹配</a>
+            <a href="/prediction">买卖点预测</a>
+            <a href="/backtest">策略回测</a>
+        </div>
+    </div>
+    <div class="container">
+        <h2>多源金融数据采集</h2>
+        <p>点击下方按钮采集全市场股票数据（行情、技术指标、资金流向、基本面）</p>
+        <br>
+        <button onclick="crawlData()">开始采集数据</button>
+        <div id="crawlResult" style="margin-top:20px;"></div>
+    </div>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

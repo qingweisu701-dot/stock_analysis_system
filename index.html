@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票智能分析系统 - 首页</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        .navbar {
+            width: 100%;
+            background: #2c3e50;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .navbar-logo {
+            color: #fff;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar-menu a {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .navbar-menu a:hover {
+            background: #34495e;
+        }
+
+        .navbar-menu a.active {
+            background: #3498db;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .main-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .desc {
+            text-align: center;
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        /* 股票图表样式 */
+        .stock-chart-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 50px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .chart-title {
+            color: #2c3e50;
+            font-size: 1.5em;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .stock-select {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .time-period {
+            display: flex;
+            gap: 5px;
+        }
+
+        .time-btn {
+            padding: 6px 15px;
+            border: 1px solid #ddd;
+            background: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .time-btn.active {
+            background: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+
+        .time-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        .func-cards {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .card {
+            width: 280px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            background: #fff;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+        }
+
+        .card-icon {
+            font-size: 3em;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .card-desc {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .card-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .card-btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-logo">股票智能分析系统</div>
+            <div class="navbar-menu">
+                <a href=" " class="active">首页</a>
+                <a href="/data_crawl">数据采集</a>
+                <a href="/pattern_def">模板定义</a>
+                <a href="/matching">相似匹配</a>
+                <a href="/prediction">买卖点预测</a>
+                <a href="/backtest">策略回测</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="main-title">股票智能分析系统</h1>
+        <p class="desc">一站式股票走势分析、相似匹配、买卖点预测与策略回测平台，基于实时数据驱动，助力精准决策</p>
+
+        <!-- 股票图表区域 -->
+        <div class="stock-chart-container">
+            <div class="chart-header">
+                <h2 class="chart-title">股票走势图</h2>
+                <div class="chart-controls">
+                    <select class="stock-select" id="stockSelect">
+                        <option value="AAPL">苹果 (AAPL)</option>
+                        <option value="GOOGL">谷歌 (GOOGL)</option>
+                        <option value="MSFT">微软 (MSFT)</option>
+                        <option value="TSLA">特斯拉 (TSLA)</option>
+                        <option value="NFLX">奈飞 (NFLX)</option>
+                    </select>
+                    <div class="time-period">
+                        <button class="time-btn active" data-days="7">1周</button>
+                        <button class="time-btn" data-days="30">1月</button>
+                        <button class="time-btn" data-days="90">3月</button>
+                        <button class="time-btn" data-days="180">6月</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="stockChart"></canvas>
+            </div>
+        </div>
+
+        <div class="func-cards">
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <h3 class="card-title">模板定义</h3>
+                <p class="card-desc">自定义绘制股票走势模板，支持经典形态快速加载</p>
+                <a href="/pattern_def" class="card-btn">立即使用</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔍</div>
+                <h3 class="card-title">相似匹配</h3>
+                <p class="card-desc">基于DTW算法，匹配实时股票与模板走势，筛选优质标的</p>
+                <a href="/matching" class="card-btn">立即匹配</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📈</div>
+                <h3 class="card-title">买卖点预测</h3>
+                <p class="card-desc">智能预测股票买点卖点，给出持仓建议，提升投资胜率</p>
+                <a href="/prediction" class="card-btn">查看预测</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📋</div>
+                <h3 class="card-title">策略回测</h3>
+                <p class="card-desc">回测交易策略收益，分析最大回撤、胜率等核心指标</p>
+                <a href="/backtest" class="card-btn">开始回测</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Chart.js -->
+    <script src="static/js/chart.umd.min.js"></script>
+
+    <script>
+        // 等待页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取图表元素
+            const ctx = document.getElementById('stockChart').getContext('2d');
+
+            // 股票数据（模拟）
+            const stockData = {
+                'AAPL': {
+                    name: '苹果公司',
+                    data: generateStockData(180, 150, 180) // 6个月数据
+                },
+                'GOOGL': {
+                    name: '谷歌',
+                    data: generateStockData(180, 130, 150)
+                },
+                'MSFT': {
+                    name: '微软',
+                    data: generateStockData(180, 280, 330)
+                },
+                'TSLA': {
+                    name: '特斯拉',
+                    data: generateStockData(180, 200, 250)
+                },
+                'NFLX': {
+                    name: '奈飞',
+                    data: generateStockData(180, 400, 500)
+                }
+            };
+
+            // 生成模拟股票数据
+            function generateStockData(days, startPrice, endPrice) {
+                const data = [];
+                let price = startPrice;
+                const dailyChange = (endPrice - startPrice) / days;
+
+                // 生成日期标签
+                const labels = [];
+                const now = new Date();
+                for (let i = days; i >= 0; i--) {
+                    const date = new Date(now);
+                    date.setDate(date.getDate() - i);
+                    labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
+                }
+
+                // 生成价格数据（加入随机波动）
+                const prices = [];
+                for (let i = 0; i <= days; i++) {
+                    price += dailyChange + (Math.random() - 0.5) * 5;
+                    prices.push(price);
+                }
+
+                return { labels, prices };
+            }
+
+            // 创建图表
+            let stockChart = null;
+
+            function createChart(stockCode, days) {
+                const stock = stockData[stockCode];
+                const data = stock.data;
+
+                // 如果图表已存在，先销毁
+                if (stockChart) {
+                    stockChart.destroy();
+                }
+
+                // 根据天数筛选数据
+                const startIndex = Math.max(0, data.labels.length - days - 1);
+                const chartLabels = data.labels.slice(startIndex);
+                const chartPrices = data.prices.slice(startIndex);
+
+                // 计算简单移动平均线（SMA）
+                function calculateSMA(data, period) {
+                    const sma = [];
+                    for (let i = period - 1; i < data.length; i++) {
+                        let sum = 0;
+                        for (let j = 0; j < period; j++) {
+                            sum += data[i - j];
+                        }
+                        sma.push(sum / period);
+                    }
+                    // 填充前面的数据为null
+                    const fullSMA = new Array(data.length - sma.length).fill(null).concat(sma);
+                    return fullSMA;
+                }
+
+                const sma5 = calculateSMA(chartPrices, 5);
+                const sma20 = calculateSMA(chartPrices, 20);
+
+                // 计算涨跌颜色
+                const colors = chartPrices.map((price, index) => {
+                    if (index === 0) return '#3498db'; // 第一天为蓝色
+                    return price >= chartPrices[index - 1] ? '#2ecc71' : '#e74c3c'; // 涨为绿色，跌为红色
+                });
+
+                // 创建图表
+                stockChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [
+                            {
+                                label: `${stock.name} 股价`,
+                                data: chartPrices,
+                                borderColor: '#3498db',
+                                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 0,
+                                pointHoverRadius: 5
+                            },
+                            {
+                                label: '5日均线',
+                                data: sma5,
+                                borderColor: '#f39c12',
+                                borderWidth: 1.5,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false
+                            },
+                            {
+                                label: '20日均线',
+                                data: sma20,
+                                borderColor: '#9b59b6',
+                                borderWidth: 1.5,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    color: '#2c3e50',
+                                    font: {
+                                        size: 12
+                                    },
+                                    padding: 20
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(44, 62, 80, 0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#3498db',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += '$' + context.parsed.y.toFixed(2);
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    color: '#666',
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    color: '#666',
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(2);
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: '价格 (USD)',
+                                    color: '#666'
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest'
+                        }
+                    }
+                });
+            }
+
+            // 初始化图表
+            createChart('AAPL', 30);
+
+            // 股票选择事件
+            document.getElementById('stockSelect').addEventListener('change', function() {
+                const activeBtn = document.querySelector('.time-btn.active');
+                const days = parseInt(activeBtn.getAttribute('data-days'));
+                createChart(this.value, days);
+            });
+
+            // 时间周期按钮事件
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 移除所有按钮的active类
+                    document.querySelectorAll('.time-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    // 给当前按钮添加active类
+                    this.classList.add('active');
+
+                    // 获取选中的股票和天数
+                    const stockCode = document.getElementById('stockSelect').value;
+                    const days = parseInt(this.getAttribute('data-days'));
+
+                    // 更新图表
+                    createChart(stockCode, days);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

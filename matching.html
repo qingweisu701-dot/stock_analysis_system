@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票走势相似匹配 - 股票智能分析系统</title>
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            width: 100%;
+            background-color: #2c3e50;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-logo {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .navbar-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            margin-left: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navbar-menu a:hover, .navbar-menu a.active {
+            background-color: #3498db;
+        }
+
+        /* 页面主体容器 */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 页面头部（标题+返回按钮） */
+        .page-header {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .page-header h2 {
+            color: #2c3e50;
+            font-size: 1.5em;
+        }
+        .return-btn {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .return-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* 匹配表单样式 */
+        .match-form {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #e1e4e8;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .form-item {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .form-item label {
+            width: 100px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .form-item select {
+            flex: 1;
+            max-width: 400px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5da;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #fafbfc;
+            transition: border-color 0.3s;
+        }
+        .form-item select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        .start-match-btn {
+            padding: 12px 30px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.1s;
+            display: block;
+            margin: 25px auto 0;
+            width: 200px;
+        }
+        .start-match-btn:hover {
+            background-color: #27ae60;
+        }
+        .start-match-btn:active {
+            transform: translateY(1px);
+        }
+        .start-match-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 匹配结果区域 */
+        .match-result {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #e1e4e8;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .match-result h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eaecef;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .result-table th {
+            background-color: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .result-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        .result-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .empty-result {
+            color: #7f8c8d;
+            padding: 40px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* 加载提示样式 */
+        .loading-tip {
+            color: #3498db;
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+        }
+        .loading-tip:after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { color: rgba(52, 152, 219, 0); }
+            40% { color: #3498db; }
+            60%, 100% { color: rgba(52, 152, 219, 0); }
+        }
+
+        /* 状态提示 */
+        .status-message {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .navbar-menu {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .navbar-menu a {
+                margin: 5px;
+            }
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            .form-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .form-item label {
+                width: 100%;
+            }
+            .form-item select {
+                max-width: 100%;
+                width: 100%;
+            }
+            .result-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-logo">股票智能分析系统</div>
+            <div class="navbar-menu">
+                <a href="/">首页</a>
+                <a href="/data_crawl">数据采集</a>
+                <a href="/pattern_def">模板定义</a>
+                <a href="/matching" class="active">相似匹配</a>
+                <a href="/prediction">买卖点预测</a>
+                <a href="/backtest">策略回测</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面主体 -->
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <h2>股票走势相似匹配</h2>
+            <a href="/" class="return-btn">返回主页</a>
+        </div>
+
+        <!-- 状态提示区域 -->
+        <div id="statusArea"></div>
+
+        <!-- 匹配查询表单 -->
+        <div class="match-form">
+            <div class="form-item">
+                <label for="patternSelect">选择模板：</label>
+                <select id="patternSelect">
+                    <option value="">-- 加载中，请稍候 --</option>
+                </select>
+            </div>
+            <div class="form-item">
+                <label for="industrySelect">行业筛选：</label>
+                <select id="industrySelect">
+                    <option value="">全部行业</option>
+                    <option value="">-- 加载中，请稍候 --</option>
+                </select>
+            </div>
+            <button id="matchButton" class="start-match-btn" onclick="startMatching()">开始匹配</button>
+        </div>
+
+        <!-- 匹配结果区域 -->
+        <div class="match-result">
+            <h3>匹配结果</h3>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th>股票代码</th>
+                        <th>股票名称</th>
+                        <th>所属行业</th>
+                        <th>匹配度</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody">
+                    <tr>
+                        <td colspan="5" class="empty-result">请选择模板并点击"开始匹配"</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 引入jQuery -->
+    <script src="/static/js/jquery-3.6.4.min.js"></script>
+    <script>
+        // 全局变量
+        let isMatching = false;
+        let patterns = [];
+        let industries = [];
+
+        // 页面加载完成后初始化
+        $(document).ready(function() {
+            console.log('页面加载完成，开始初始化...');
+
+            // 加载模板列表和行业列表
+            loadPatternList();
+            loadIndustryList();
+
+            // 绑定选择框变化事件
+            $('#patternSelect').change(function() {
+                updateMatchButtonState();
+            });
+        });
+
+        /**
+         * 更新匹配按钮状态
+         */
+        function updateMatchButtonState() {
+            const patternId = $('#patternSelect').val();
+            const $matchButton = $('#matchButton');
+
+            if (patternId && patternId !== '') {
+                $matchButton.prop('disabled', false);
+            } else {
+                $matchButton.prop('disabled', true);
+            }
+        }
+
+        /**
+         * 显示状态消息
+         */
+        function showStatus(message, type = 'info') {
+            const $statusArea = $('#statusArea');
+            const typeClass = {
+                'success': 'status-success',
+                'error': 'status-error',
+                'warning': 'status-warning',
+                'info': 'status-info'
+            }[type] || 'status-info';
+
+            $statusArea.html(`<div class="status-message ${typeClass}">${message}</div>`);
+
+            // 5秒后自动清除成功/信息消息
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    $statusArea.empty();
+                }, 5000);
+            }
+        }
+
+        /**
+         * 加载已保存的模板列表（从后端接口获取）
+         */
+        function loadPatternList() {
+            console.log('开始加载模板列表...');
+
+            $.get('/get_patterns', function(res) {
+                console.log('模板列表响应:', res);
+                const $select = $('#patternSelect');
+                $select.empty();
+                $select.append('<option value="">-- 请选择模板 --</option>');
+
+                if (res.code === 200 && res.data && res.data.length > 0) {
+                    patterns = res.data;
+
+                    // 遍历模板数据生成选项
+                    res.data.forEach(pattern => {
+                        $select.append(`
+                            <option value="${pattern.id}">${pattern.name}（${pattern.type || '自定义'}型）</option>
+                        `);
+                    });
+
+                    console.log(`成功加载 ${res.data.length} 个模板`);
+                    showStatus(`成功加载 ${res.data.length} 个模板`, 'success');
+                } else {
+                    $select.append('<option value="">暂无已保存的模板</option>');
+                    console.warn('未获取到模板数据或数据为空');
+                    showStatus('暂无可用模板，请先创建模板', 'warning');
+                }
+
+                updateMatchButtonState();
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('模板列表请求失败:', textStatus, errorThrown);
+                const $select = $('#patternSelect');
+                $select.empty();
+                $select.append('<option value="">加载模板失败，请刷新页面</option>');
+                showStatus('加载模板列表失败，请检查网络连接', 'error');
+                updateMatchButtonState();
+            });
+        }
+
+        /**
+         * 加载数据库中的行业列表（从后端接口获取）
+         */
+        function loadIndustryList() {
+            console.log('开始加载行业列表...');
+
+            $.get('/get_industry_list', function(res) {
+                console.log('行业数据响应:', res);
+                const $select = $('#industrySelect');
+                $select.empty();
+                $select.append('<option value="">全部行业</option>');
+
+                if (res.code === 200 && res.data && res.data.length > 0) {
+                    industries = res.data;
+                    console.log('获取到行业数量:', res.data.length);
+
+                    // 去重和排序
+                    const uniqueIndustries = [...new Set(res.data)].sort();
+                    uniqueIndustries.forEach(industry => {
+                        if (industry && industry.trim() !== '') {
+                            $select.append(`<option value="${industry}">${industry}</option>`);
+                        }
+                    });
+
+                    console.log('行业列表加载完成');
+                    showStatus(`成功加载 ${uniqueIndustries.length} 个行业`, 'success');
+                } else {
+                    console.warn('未获取到行业数据或数据为空');
+                    $select.append('<option value="" disabled>暂无行业数据</option>');
+                    showStatus('暂无行业数据，请先采集数据', 'warning');
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('行业列表请求失败:', textStatus, errorThrown);
+                const $select = $('#industrySelect');
+                $select.empty();
+                $select.append('<option value="">全部行业</option>');
+                $select.append('<option value="" disabled>加载失败，请刷新重试</option>');
+                showStatus('加载行业列表失败，请检查网络连接', 'error');
+            });
+        }
+
+        /**
+         * 开始相似匹配
+         */
+        function startMatching() {
+            // 防止重复点击
+            if (isMatching) {
+                console.log('匹配正在进行中，请等待...');
+                return;
+            }
+
+            const patternId = $('#patternSelect').val();
+            const industry = $('#industrySelect').val();
+            const $resultBody = $('#resultBody');
+            const $matchButton = $('#matchButton');
+
+            // 校验模板选择
+            if (!patternId || patternId === '') {
+                alert('请先选择要匹配的走势模板！');
+                return;
+            }
+
+            console.log('开始匹配，参数:', { patternId, industry });
+
+            // 设置加载状态
+            isMatching = true;
+            $matchButton.prop('disabled', true);
+            $matchButton.text('匹配中...');
+            $resultBody.html('<tr><td colspan="5" class="loading-tip">正在匹配中，请稍候</td></tr>');
+
+            showStatus('正在匹配中，请稍候...', 'info');
+
+            // 调用后端匹配接口
+            $.post('/match_pattern', {
+                pattern_id: patternId,
+                industry: industry || '' // 传空字符串表示全部行业
+            }, function(res) {
+                isMatching = false;
+                $matchButton.prop('disabled', false);
+                $matchButton.text('开始匹配');
+
+                console.log('匹配结果:', res);
+
+                if (res.code === 200) {
+                    if (res.data && res.data.length > 0) {
+                        // 渲染匹配结果
+                        let html = '';
+                        res.data.forEach((item, index) => {
+                            // 根据匹配度设置颜色
+                            const matchScore = item.match_score || 0;
+                            let scoreColor = '#e74c3c'; // 红色，低匹配度
+                            if (matchScore > 0.7) scoreColor = '#2ecc71'; // 绿色，高匹配度
+                            else if (matchScore > 0.5) scoreColor = '#f39c12'; // 橙色，中等匹配度
+
+                            html += `
+                                <tr>
+                                    <td>${item.ts_code || '-'}</td>
+                                    <td>${item.name || '-'}</td>
+                                    <td>${item.industry || '-'}</td>
+                                    <td style="color: ${scoreColor}; font-weight: bold;">
+                                        ${matchScore ? (matchScore * 100).toFixed(2) + '%' : '-'}
+                                    </td>
+                                    <td>
+                                        <button class="detail-btn" onclick="viewStockDetail('${item.ts_code}')">查看详情</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        $resultBody.html(html);
+                        console.log(`显示 ${res.data.length} 条匹配结果`);
+                        showStatus(`匹配完成，找到 ${res.data.length} 只相似股票`, 'success');
+                    } else {
+                        $resultBody.html('<tr><td colspan="5" class="empty-result">未找到匹配的股票</td></tr>');
+                        console.log('未找到匹配的股票');
+                        showStatus('未找到匹配的股票，请尝试其他模板或行业', 'warning');
+                    }
+                } else {
+                    $resultBody.html('<tr><td colspan="5" class="empty-result">匹配失败：' + (res.msg || '未知错误') + '</td></tr>');
+                    console.error('匹配失败:', res.msg);
+                    showStatus('匹配失败：' + (res.msg || '未知错误'), 'error');
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                isMatching = false;
+                $matchButton.prop('disabled', false);
+                $matchButton.text('开始匹配');
+
+                console.error('匹配请求失败:', textStatus, errorThrown);
+                $resultBody.html('<tr><td colspan="5" class="empty-result">匹配请求失败，请检查网络或后端服务</td></tr>');
+                showStatus('匹配请求失败，请检查网络连接或稍后重试', 'error');
+            });
+        }
+
+        /**
+         * 查看股票详情
+         */
+        function viewStockDetail(tsCode) {
+            if (!tsCode) return;
+
+            console.log('查看股票详情:', tsCode);
+            // 这里可以跳转到股票详情页面或打开模态框显示详情
+            alert(`查看股票 ${tsCode} 的详情功能待实现`);
+            // 实际实现可能如下：
+            // window.open(`/stock_detail?ts_code=${tsCode}`, '_blank');
+            // 或
+            // openStockModal(tsCode);
+        }
+
+        /**
+         * 调试功能：检查数据库状态
+         */
+        function checkDbStatus() {
+            console.log('检查数据库状态...');
+            $.get('/debug/db_status', function(res) {
+                console.log('数据库状态:', res);
+                if (res.code === 200) {
+                    alert(`数据库状态检查:\n文件存在: ${res.data.db_file_exists ? '是' : '否'}\n表数量: ${res.data.tables.length}\n股票数据条数: ${res.data.stock_basic_count || 0}`);
+                } else {
+                    alert('数据库状态检查失败: ' + res.msg);
+                }
+            }).fail(function() {
+                alert('数据库状态检查请求失败，请确保后端服务正常运行');
+            });
+        }
+    </script>
+</body>
+</html>
